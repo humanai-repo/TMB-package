@@ -34,3 +34,12 @@ vignettes/*.pdf
 
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
+
+# Temp data is generated as TSV files and your don't want to accidentaly commit one.
+*.tsv
+
+# Ignore working data
+working-data
+
+# Ignore frutstating OS X autogen files
+.DS_Store
