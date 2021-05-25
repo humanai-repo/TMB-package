@@ -8,8 +8,9 @@ then
 elif [[ $# -eq 0 ]]
 then
   INPUT_PATH="/parcel/data/in"
+  STATIC_PATH="/static/"
   OUTPUT_PATH="/parcel/data/out"
-  CMD="Rscript ./CalculateTMB.R $INPUT_PATH/UCEC.rda $INPUT_PATH/exome_hg38_vep.Rdata $INPUT_PATH/gene.covar.txt $INPUT_PATH/mutation_context_96.txt $INPUT_PATH/TST170_DNA_targets_hg38.bed $INPUT_PATH/GRCh38.d1.vd1.fa $OUTPUT_PATH/tmb.pdf"
+  CMD="Rscript ./CalculateTMB.R $STATIC_PATH/UCEC.rda $STATIC_PATH/exome_hg38_vep.Rdata $INPUT_PATH/gene.covar.txt $INPUT_PATH/mutation_context_96.txt $INPUT_PATH/TST170_DNA_targets_hg38.bed $STATIC_PATH/GRCh38.d1.vd1.fa $OUTPUT_PATH/tmb.pdf"
   echo $CMD
   $CMD
 else
