@@ -1,16 +1,20 @@
 FROM continuumio/anaconda
 WORKDIR ./
 RUN conda install -c bioconda/label/cf201901 bedtools
-COPY R/Install.R ./Install.R
-COPY R/CalculateTMB.R ./CalculateTMB.R
-COPY R/calcTMB.sh ./calcTMB.sh
+CMD mkdir app
+COPY R/Install.R ./app/Install.R
+COPY R/CalculateTMB.R ./app/CalculateTMB.R
+COPY R/calcTMB.sh ./app/calcTMB
+COPY R/HelloWorld.R ./app/HelloWorld.R
+COPY R/HelloWorld.sh ./app/HelloWorld
+COPY dist/csv-extractor-cli-*.tar.gz ./csv-extractor-cli.tar.gz
 CMD mkdir static
-COPY working-data/exome_hg38_vep.Rdata ./static/exome_hg38_vep.Rdata
-COPY working-data/GRCh38.d1.vd1.fa ./static/GRCh38.d1.vd1.fa
-COPY working-data/UCEC.rda ./static/UCEC.rda
 RUN apt-get update
 RUN apt-get -yq install build-essential
 RUN conda install r=3.5.1
-RUN Rscript ./Install.R
-RUN chmod 755 calcTMB.sh
+RUN Rscript ./app/Install.R
+RUN chmod 755 ./app/calcTMB
+RUN chmod 755 ./app/HelloWorld
+ENV PATH "$PATH:/app"
+RUN pip install csv-extractor-cli.tar.gz
 CMD bash

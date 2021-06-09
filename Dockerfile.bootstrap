@@ -1,0 +1,7 @@
+FROM humansimon/ectmb
+WORKDIR ./
+CMD mkdir static
+COPY working-data/exome_hg38_vep.Rdata ./static/exome_hg38_vep.Rdata
+COPY working-data/GRCh38.d1.vd1.fa ./static/GRCh38.d1.vd1.fa
+COPY working-data/UCEC.rda ./static/UCEC.rda
+CMD bash
