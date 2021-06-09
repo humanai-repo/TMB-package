@@ -9,6 +9,8 @@ if (length(args)<7) {
   stop("Expected Ags: ucec.rda hg38ExomeFile geneProperties mutationContextsTxt mutationtContextsBed grch38.d1 ouput.pdf ?earlyexit", call.=FALSE)
 }
 
+# TODO: Clean up how commands are handled, these should all be flags.
+
 flog.debug("Load ucec.rda")
 load(args[1])
 exomef                 = args[2]  #### hg38 exome file
