@@ -39,9 +39,16 @@ an output pdf.
 "./tmb.pdf"
 ```
 
-The easiest way to run from docker is to launch the docker image with a flat
-input directory containing the example input files (listed above) mounted to
-/parcel/data/in and an output directory to /parcel/data/out.
+The easiest way to run from docker:
+
+```bash
+docker run --rm -v $WORKING_DATA:/parcel/data/in -v $WORKING_DATA:/parcel/data/out humansimon/ectmb-plus calcTMB.sh
+```
+
+Or invoking R directly:
+```bash
+docker run --rm -v $WORKING_DATA:/parcel/data/in -v $WORKING_DATA:/parcel/data/out humansimon/ectmb-plus Rscript /app/CalculateTMB.R /static/UCEC.rda /static/exome_hg38_vep.Rdata /parcel/data/in/gene.covar.txt /parcel/data/in/mutation_context_96.txt /parcel/data/in/TST170_DNA_targets_hg38.bed /static/GRCh38.d1.vd1.fa /parcel/data/out/tmb.pdf
+```
 
 Peak memory for the docker image was measured at 7.5G (make sure enough RAM/swap
 is allocated).
@@ -64,6 +71,23 @@ docker tag $IMAGE_ID $DOCKERHUB_USERNAME/ectmb:latest
 docker login --username=$DOCKERHUB_USERNAME
 
 docker push $DOCKERHUB_USERNAME/ectmb
+```
+
+To bootstrap the inputs onto into the dockerimage.
+
+```bash
+docker build --tag ectmb-plus -f Dockerfile.bootstrap .
+```
+
+```bash
+# List runing docker image to get the Image ID
+docker images
+
+docker tag $IMAGE_ID $DOCKERHUB_USERNAME/ectmb-plus:latest
+
+docker login --username=$DOCKERHUB_USERNAME
+
+docker push $DOCKERHUB_USERNAME/ectmb-plus
 ```
 
 ## Caveats
