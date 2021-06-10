@@ -1,0 +1,6 @@
+FROM humansimon/ectmb-plus
+WORKDIR ./
+COPY working-data/gene.covar.txt ./static/gene.covar.txt
+COPY working-data/mutation_context_96.txt ./static/mutation_context_96.txt
+COPY working-data/TST170_DNA_targets_hg38.bed ./static/TST170_DNA_targets_hg38.bed
+CMD bash

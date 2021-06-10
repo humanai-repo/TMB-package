@@ -73,10 +73,27 @@ docker login --username=$DOCKERHUB_USERNAME
 docker push $DOCKERHUB_USERNAME/ectmb
 ```
 
-To bootstrap the inputs onto into the dockerimage.
+To bootstrap the largest inputs onto into the dockerimage.
 
 ```bash
 docker build --tag ectmb-plus -f Dockerfile.bootstrap .
+```
+
+```bash
+# List runing docker image to get the Image ID
+docker images
+
+docker tag $IMAGE_ID $DOCKERHUB_USERNAME/ectmb-plus:latest
+
+docker login --username=$DOCKERHUB_USERNAME
+
+docker push $DOCKERHUB_USERNAME/ectmb-plus
+```
+
+To make a docker image with no deps all inputs can be bootstraped.
+
+```bash
+docker build --tag ectmb-nodeps -f Dockerfile.nodeps .
 ```
 
 ```bash
