@@ -16,38 +16,80 @@ The resulting image is sealed for execution within a sandbox.
 We've taken the original ecTMB example and backed it into the image. 
 
 ## Usage
-calcTMB.sh is the entry script. Input files can either be provided as args
-or default to mountpoints. The expected mountpoints are the
+calcTMB.sh is the main entry script. The expected mountpoints are the
 [Parcel](https://www.oasislabs.com/) mountpoints: /parcel/data/in for
-input files and /parcel/data/out for ouput files.
+input files and /parcel/data/out for output files. calcTMB.sh has 3
+modes: `helloworld` just outputs the help text, `test` applies the
+prebuilt model, `train` builds a new model and applies it.
 
 ```bash
 ./calcTMB.sh
-```
-
-The first 6 args are paths to input files. EcTMB provides downloadable 
-[example and reference data](https://github.com/bioinform/ecTMB#download-example-and-reference-data). The final argument is a path to
-an output pdf.
-
-```bash
-./calcTMB.sh "./ecTMB_data/example/UCEC.rda" \
-"./ecTMB_data/references/exome_hg38_vep.Rdata" \
-"./ecTMB_data/references/gene.covar.txt" \
-"./ecTMB_data/references/mutation_context_96.txt" \
-"./ecTMB_data/references/TST170_DNA_targets_hg38.bed" \
-"./GRCh38.d1.vd1.fa" \
-"./tmb.pdf"
+Usage: /calcTMB.sh (test|train|helloworld)
 ```
 
 The easiest way to run from docker:
 
 ```bash
-docker run --rm -v $WORKING_DATA:/parcel/data/in -v $WORKING_DATA:/parcel/data/out humansimon/ectmb-plus calcTMB.sh
+docker run --rm -v $WORKING_DATA:/parcel/data/in -v $WORKING_DATA:/parcel/data/out humansimon/ectmb calcTMB test
 ```
 
 Or invoking R directly:
 ```bash
-docker run --rm -v $WORKING_DATA:/parcel/data/in -v $WORKING_DATA:/parcel/data/out humansimon/ectmb-plus Rscript /app/CalculateTMB.R /static/UCEC.rda /static/exome_hg38_vep.Rdata /parcel/data/in/gene.covar.txt /parcel/data/in/mutation_context_96.txt /parcel/data/in/TST170_DNA_targets_hg38.bed /static/GRCh38.d1.vd1.fa /parcel/data/out/tmb.pdf
+docker run --rm \
+  -v $WORKING_DATA:/parcel/data/in \
+  -v $WORKING_DATA:/parcel/data/out \
+  humansimon/ectmb \
+  Rscript /app/CalculateTMB.R \
+    --ucec=/parcel/data/in/UCEC.rda \
+    --exomef=/parcel/data/in/exome_hg38_vep.Rdata \
+    --covarf=/parcel/data/in/gene.covar.txt \
+    --mutContextf=/parcel/data/in/mutation_context_96.txt \
+    --TST170_panel=/parcel/data/in/TST170_DNA_targets_hg38.bed \
+    --ref=/parcel/data/in/GRCh38.d1.vd1.fa \
+    --output=/parcel/data/out/tmb.pdf
+```
+
+Full documentation can be printed by calling help.
+
+```bash
+RScript ./R/CalculateTMB.R --help
+
+Usage: R/CalculateTMB.R [options]
+
+
+Options:
+        -h, --help
+                Show this help message and exit
+
+        --ucec=UCEC
+                Path to input UCEC.rda
+
+        --exomef=EXOMEF
+                Path to input exome_hg38_vep.Rdata
+
+        --covarf=COVARF
+                Path to input gene.covar.txt
+
+        --mutContextf=MUTCONTEXTF
+                Path to input mutation_context_96.txt
+
+        --TST170_panel=TST170_PANEL
+                Path to input TST170_DNA_targets_hg38.bed
+
+        --ref=REF
+                Path to input GRCh38.d1.vd1.fa
+
+        --output=OUTPUT
+                Path to output tmb.pdf
+
+        --earlyexit
+                Exit early to test initial processing
+
+        --train
+                Running training in addition to testing
+
+        --quiet
+                Quiet output
 ```
 
 Peak memory for the docker image was measured at 7.5G (make sure enough RAM/swap
@@ -73,23 +115,6 @@ docker login --username=$DOCKERHUB_USERNAME
 docker push $DOCKERHUB_USERNAME/ectmb
 ```
 
-To bootstrap the largest inputs onto into the dockerimage.
-
-```bash
-docker build --tag ectmb-plus -f Dockerfile.bootstrap .
-```
-
-```bash
-# List runing docker image to get the Image ID
-docker images
-
-docker tag $IMAGE_ID $DOCKERHUB_USERNAME/ectmb-plus:latest
-
-docker login --username=$DOCKERHUB_USERNAME
-
-docker push $DOCKERHUB_USERNAME/ectmb-plus
-```
-
 To make a docker image with no deps all inputs can be bootstraped.
 
 ```bash
@@ -100,11 +125,22 @@ docker build --tag ectmb-nodeps -f Dockerfile.nodeps .
 # List runing docker image to get the Image ID
 docker images
 
-docker tag $IMAGE_ID $DOCKERHUB_USERNAME/ectmb-plus:latest
+docker tag $IMAGE_ID $DOCKERHUB_USERNAME/ectmb-nodeps:latest
 
 docker login --username=$DOCKERHUB_USERNAME
 
-docker push $DOCKERHUB_USERNAME/ectmb-plus
+docker push $DOCKERHUB_USERNAME/ectmb-nodeps
+```
+
+The nodeps Docker image has two alternative entry points, one requiring only
+an output directory, the other no mount points.
+
+```bash
+docker run --rm -v $WORKING_DATA:/parcel/data/out humansimon/ectmb-nodeps calcTMBNoDeps test
+```
+
+```bash
+docker run --rm -v $WORKING_DATA:/parcel/data/out humansimon/ectmb-nodeps calcTMBNoMount test
 ```
 
 ## Caveats
