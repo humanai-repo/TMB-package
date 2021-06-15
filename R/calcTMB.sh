@@ -15,6 +15,6 @@ then
   $CMD
 else
   echo "Expected all files to be specified or no files to be specified (defaults)."
-  CMD="Rscript /app/CalculateTMB.R"
+  CMD="Rscript /app/CalculateTMB.R --help"
   $CMD
 fi
