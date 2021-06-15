@@ -1,5 +1,5 @@
 #!/bin/bash
 
-CMD="Rscript /app/HelloWorld.R /parcel/data/out/helloWorld.txt"
+CMD="Rscript /app/CalculateTMB.R --help > /parcel/data/out/help.txt"
 echo $CMD
 $CMD
