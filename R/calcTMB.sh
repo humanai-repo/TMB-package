@@ -6,18 +6,18 @@ CMD="Rscript /app/CalculateTMB.R --ucec=$INPUT_PATH/UCEC.rda --exomef=$INPUT_PAT
 
 if [[ $# -eq 1 ]]
 then
-  if [[ $1 -eq "test" ]]
+  if [[ "{$1}" = "test" ]]
   then
     echo $CMD
     $CMD
-  elif [[ $1 -eq "train" ]]
+  elif [[ "{$1}" = "train" ]]
   then
     CMD="{$CMD} --train"
     echo $CMD
     $CMD
-  elif [[ $1 -eq "helloworld" ]]
+  elif [[ "{$1}" = "helloworld" ]]
   then
-    CMD="Rscript /app/CalculateTMB.R | tee $OUTPUT_PATH/help.txt"
+    CMD="Rscript /app/CalculateTMB.R --help | tee $OUTPUT_PATH/help.txt"
     echo $CMD
     $CMD
   else
