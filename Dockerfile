@@ -12,5 +12,4 @@ RUN conda install r=3.5.1
 RUN Rscript ./app/Install.R
 RUN chmod 755 ./app/calcTMB
 ENV PATH "$PATH:/app"
-RUN pip install csv-extractor-cli.tar.gz
 CMD bash
