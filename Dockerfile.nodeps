@@ -1,6 +1,14 @@
-FROM humansimon/ectmb-plus
-WORKDIR ./
+FROM humansimon/ectmb
+WORKDIR /
+RUN mkdir static
+COPY working-data/exome_hg38_vep.Rdata ./static/exome_hg38_vep.Rdata
+COPY working-data/GRCh38.d1.vd1.fa ./static/GRCh38.d1.vd1.fa
+COPY working-data/UCEC.rda ./static/UCEC.rda
 COPY working-data/gene.covar.txt ./static/gene.covar.txt
 COPY working-data/mutation_context_96.txt ./static/mutation_context_96.txt
 COPY working-data/TST170_DNA_targets_hg38.bed ./static/TST170_DNA_targets_hg38.bed
+COPY R/calcTMBNoDeps.sh ./app/calcTMBNoDeps
+COPY R/calcTMBNoMount.sh ./app/calcTMBNoMount
+RUN chmod 755 ./app/calcTMBNoDeps
+RUN chmod 755 ./app/calcTMBNoMount
 CMD bash

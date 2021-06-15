@@ -1,5 +1,5 @@
 FROM continuumio/anaconda
-WORKDIR ./
+WORKDIR /
 RUN conda install -c bioconda/label/cf201901 bedtools
 CMD mkdir app
 COPY R/Install.R ./app/Install.R
