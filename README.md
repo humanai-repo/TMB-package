@@ -140,7 +140,7 @@ docker run --rm -v $WORKING_DATA:/parcel/data/out humansimon/ectmb-nodeps calcTM
 ```
 
 ```bash
-docker run --rm -v $WORKING_DATA:/parcel/data/out humansimon/ectmb-nodeps calcTMBNoMount test
+docker run --rm humansimon/ectmb-nodeps calcTMBNoMount test
 ```
 
 ## Caveats
