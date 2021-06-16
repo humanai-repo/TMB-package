@@ -1,7 +1,8 @@
 # Install BiocManager and Packages
 Sys.setenv(TAR = "/bin/tar")
 install.packages("devtools", repo="http://cran.rstudio.com/")
-install.packages("futile.logger",repo="http://cran.rstudio.com/")
+install.packages("futile.logger", repo="http://cran.rstudio.com/")
+install.packages("optparse", repo="http://cran.rstudio.com/")
 library(devtools);
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager", repo="http://cran.rstudio.com/")

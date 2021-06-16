@@ -1,73 +1,113 @@
+#!/usr/bin/env Rscript
+
 library(ecTMB)
 library(futile.logger)
-
-flog.threshold(DEBUG)
-
-flog.debug("Read Args")
-args = commandArgs(trailingOnly=TRUE)
-if (length(args)<7) {
-  stop("Expected Ags: ucec.rda hg38ExomeFile geneProperties mutationContextsTxt mutationtContextsBed grch38.d1 ouput.pdf ?earlyexit", call.=FALSE)
-}
-
-# TODO: Clean up how commands are handled, these should all be flags.
-
-flog.debug("Load ucec.rda")
-load(args[1])
-exomef                 = args[2]  #### hg38 exome file
-covarf                 = args[3]   ### gene properties
-mutContextf            = args[4]  ### 96 mutation contexts
-TST170_panel           = args[5]  ### 96 mutation contexts
-ref                    = args[6]
-output 				         = args[7]
-
-earlyexit <- length(args) == 8 # An extra optional command has been passed indicating early exit.
-
-
-flog.debug("Split test and training samples")
-set.seed(1002200)
-SampleID_all   = UCEC_cli$sample
-SampleID_train = sample(SampleID_all, size = round(2 * length(SampleID_all)/3), replace = F)
-SampleID_test  = SampleID_all[!SampleID_all %in% SampleID_train]
-
-## test data for panel TST 170
-sample         = data.frame(SampleID = SampleID_test, BED = TST170_panel, stringsAsFactors = FALSE)
-testData       = UCEC_mafs[UCEC_mafs$Tumor_Sample_Barcode %in% as.character(SampleID_test),]
-
-if(earlyexit) {
-  # Memory usage test. By this point the script will be using ~2G of memory. To test is mem usage 
-  # Write an output and quite.
-  write(length(SampleID_all), output)
-  q()
-}
-
-flog.debug("Read testdata Panel")
-testset_panel  = readData(testData, exomef, covarf, mutContextf, ref, samplef = sample)
-flog.debug("Read Whole Exome Sequence")
-testset_WES    = readData(testData, exomef, covarf, mutContextf, ref)  ## to calculate WES-TMB for test samples
-
-flog.debug("Calculate TMB")
-## process time less than 1s. 
-TMBs          =  pred_TMB(testset_panel, WES = testset_WES, cores = 1,
-                        params = trainedModel, mut.nonsil = T)
-
-flog.debug("Output graph")                        
-## plot the prediction.    
+library(optparse)
 library(dplyr)
 library(ggplot2)
 library(reshape)
 
-p <- TMBs %>% melt(id.vars = c("sample","WES_TMB")) %>% 
-  ggplot( aes(x = WES_TMB, y = value,  color = factor(variable, levels = c("ecTMB_panel_TMB",  "count_panel_TMB")), 
-              group = factor(variable))) + 
-  geom_point() +
-  geom_abline(slope = 1, intercept = 0) + 
-  scale_x_continuous(trans='log2') +
-  scale_y_continuous(trans='log2') +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  theme(legend.title=element_blank()) +
-  labs(x = "TMB defined by WES", y = sprintf("Predicted TMB from panel: TST170"))
+parser <- OptionParser()
+parser <- add_option(parser, c("--ucec"), help = "Path to input UCEC.rda")
+parser <- add_option(parser, c("--exomef"),
+  help = "Path to input exome_hg38_vep.Rdata")
+parser <- add_option(parser, c("--covarf"),
+  help = "Path to input gene.covar.txt")
+parser <- add_option(parser, c("--mut_contextf"),
+  help = "Path to input mutation_context_96.txt")
+parser <- add_option(parser, c("--tst_170_panel"),
+  help = "Path to input TST170_DNA_targets_hg38.bed")
+parser <- add_option(parser, c("--ref"),
+  help = "Path to input GRCh38.d1.vd1.fa")
+parser <- add_option(parser, c("--output"), help = "Path to output tmb.pdf")
+parser <- add_option(parser, c("--earlyexit"),
+  help = "Exit early to test initial processing",
+  action = "store_true", default = FALSE)
+parser <- add_option(parser, c("--train"),
+  help = "Running training in addition to testing",
+  action = "store_true", default = FALSE)
+parser <- add_option(parser, c("--quiet"), help = "Quiet output",
+  action = "store_true", default = FALSE)
 
-pdf(output)
+args <- parse_args(parser)
+
+if (! args$quiet) {
+  flog.threshold(DEBUG)
+}
+
+flog.debug("Load ucec.rda")
+load(args$ucec)
+
+flog.debug("Split test samples")
+set.seed(1002200)
+sample_id_all <- UCEC_cli$sample
+sample_id_train <-
+  sample(sample_id_all,
+    size = round(2 * length(sample_id_all) / 3), replace = F)
+sample_id_test <- sample_id_all[!sample_id_all %in% sample_id_train]
+
+# test data for panel TST 170
+sample <-
+  data.frame(SampleID = sample_id_test,
+    BED = args$tst_170_panel, stringsAsFactors = FALSE)
+test_data <-
+  UCEC_mafs[UCEC_mafs$Tumor_Sample_Barcode %in% as.character(sample_id_test), ]
+
+if (args$earlyexit) {
+  flog.debug("Exiting Early")
+  # Memory usage test. By this point the script will be using ~2G of memory.
+  # Write an output and quit.
+  write(length(SampleID_all), args$output)
+  q()
+}
+
+flog.debug("Read testdata Panel")
+testset_panel <-
+  readData(test_data, args$exomef, args$covarf, args$mut_contextf, args$ref,
+    samplef = sample)
+flog.debug("Read Whole Exome Sequence")
+# Use to calculate WES-TMB for test samples
+testset_wes <- readData(test_data, args$exomef, args$covarf, args$mut_contextf,
+  args$ref)
+
+if (args$train) {
+  flog.debug("Training samples")
+  train_data <-
+    UCEC_mafs[
+      UCEC_mafs$Tumor_Sample_Barcode %in% as.character(SampleID_train), ]
+  trainset <-
+    readData(train_data, args$exomef, args$covarf, args$mutContextf, args$ref)
+
+  flog.debug("Train model")
+  mr_tri_prob_train <- getBgMRtri(trainset)
+  trained_model <- fit_model(trainset, mr_tri_prob_train, cores = 8)
+}
+
+flog.debug("Calculate TMB")
+# process time less than 1s.
+tmbs <- pred_TMB(testset_panel, WES = testset_wes, cores = 1,
+  params = trainedModel, mut.nonsil = T)
+
+flog.debug("Output graph")
+# plot the prediction.
+p <- tmbs %>%
+  melt(id.vars = c("sample", "WES_TMB")) %>%
+  ggplot(
+    aes(x = WES_TMB, y = value,
+      color =
+        factor(variable, levels = c("ecTMB_panel_TMB",  "count_panel_TMB")),
+      group = factor(variable))) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0) +
+  scale_x_continuous(trans = "log2") +
+  scale_y_continuous(trans = "log2") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()) +
+  theme(legend.title = element_blank()) +
+  labs(x = "TMB defined by WES",
+    y = sprintf("Predicted TMB from panel: TST170"))
+
+pdf(args$output)
 print(p)
 dev.off()
